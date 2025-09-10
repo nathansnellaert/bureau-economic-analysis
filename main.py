@@ -1,5 +1,5 @@
 import os
-os.environ['CONNECTOR_NAME'] = 'bureau-economic-analysis'
+os.environ['CONNECTOR_NAME'] = 'bea'
 os.environ['RUN_ID'] = os.getenv('RUN_ID', 'local-run')
 
 from utils import validate_environment, upload_data
@@ -12,13 +12,13 @@ def main():
     
     # Process and upload in DAG order matching API discovery flow
     datasets = process_datasets()
-    upload_data(datasets, "datasets")
+    upload_data(datasets, "bea_datasets")
     
     parameters = process_parameters(datasets)
-    upload_data(parameters, "parameters")
+    upload_data(parameters, "bea_parameters")
     
     data = process_data(datasets, parameters)
-    upload_data(data, "data")
+    upload_data(data, "bea_data")
 
 if __name__ == "__main__":
     main()
