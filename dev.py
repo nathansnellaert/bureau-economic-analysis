@@ -5,8 +5,7 @@ os.environ['CONNECTOR_NAME'] = 'bureau-economic-analysis'
 os.environ['RUN_ID'] = 'local-dev'
 os.environ['ENABLE_HTTP_CACHE'] = 'true'
 os.environ['CACHE_REQUESTS'] = 'false'
-os.environ['WRITE_SNAPSHOT'] = 'false'
-os.environ['STORAGE_BACKEND'] = 'local'
+os.environ['CATALOG_TYPE'] = 'local'
 os.environ['DATA_DIR'] = 'data'
 
 # You'll need to set your BEA API key here or as an environment variable
