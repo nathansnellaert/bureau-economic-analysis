@@ -16,3 +16,7 @@ logs/
 
 # Output data (subsets is published, raw is local cache)
 data/raw/
+
+# Synced from template
+# Output data (synced via R2, not git)
+data/
