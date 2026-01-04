@@ -30,6 +30,7 @@ def run():
             "description": table['Description'],
             "annual": get_nipa_data(table_name, frequency='A', year='X'),
             "quarterly": get_nipa_data(table_name, frequency='Q', year='X'),
+            "monthly": get_nipa_data(table_name, frequency='M', year='X'),
         }
 
         # Save each table immediately

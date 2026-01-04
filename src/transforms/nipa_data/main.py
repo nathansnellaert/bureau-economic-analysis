@@ -401,7 +401,7 @@ def run():
             datasets_skipped += 1
             continue
 
-        all_records = data.get('annual', []) + data.get('quarterly', [])
+        all_records = data.get('annual', []) + data.get('quarterly', []) + data.get('monthly', [])
 
         for frequency in ['annual', 'quarterly', 'monthly']:
             table = transform_table_frequency(all_records, frequency)
