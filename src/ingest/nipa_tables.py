@@ -1,5 +1,5 @@
 
-from bea_client import get_parameter_values
+from utils.bea_client import get_parameter_values
 from subsets_utils import save_raw_json
 
 

@@ -1,7 +1,7 @@
 """Ingest all NIPA tables dynamically from BEA catalog."""
 
 from subsets_utils import save_raw_json, load_state, save_state
-from bea_client import get_parameter_values, get_nipa_data
+from utils.bea_client import get_parameter_values, get_nipa_data
 
 
 def run():
