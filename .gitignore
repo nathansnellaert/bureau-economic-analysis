@@ -11,7 +11,7 @@ dev/
 dev.py
 
 # Cache and logs
-http_cache/
+**/http_cache/
 logs/
 
 # Output data (subsets is published, raw is local cache)
