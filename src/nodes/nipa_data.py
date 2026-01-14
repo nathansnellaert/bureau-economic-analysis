@@ -41,3 +41,14 @@ def run():
         save_state("nipa_data", {"completed": list(completed)})
 
     print(f"  Completed fetching {len(pending)} tables")
+
+
+from nodes.nipa_tables import run as nipa_tables_run
+
+NODES = {
+    run: [nipa_tables_run],
+}
+
+
+if __name__ == "__main__":
+    run()

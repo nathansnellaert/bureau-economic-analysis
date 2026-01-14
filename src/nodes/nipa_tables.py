@@ -1,3 +1,4 @@
+"""Fetch NIPA table catalog from BEA API."""
 
 from utils.bea_client import get_parameter_values
 from subsets_utils import save_raw_json
@@ -12,3 +13,12 @@ def run():
     print(f"  Found {len(tables):,} tables")
 
     save_raw_json(tables, "nipa_tables")
+
+
+NODES = {
+    run: [],
+}
+
+
+if __name__ == "__main__":
+    run()

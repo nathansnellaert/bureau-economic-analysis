@@ -13,9 +13,7 @@ from collections import defaultdict
 
 import pyarrow as pa
 
-from subsets_utils import load_raw_json, upload_data, publish
-from .test import test
-
+from subsets_utils import load_raw_json, upload_data, validate
 
 def slugify(text: str) -> str:
     """Convert LineDescription to snake_case column name."""
@@ -23,7 +21,6 @@ def slugify(text: str) -> str:
     text = re.sub(r'[^a-z0-9\s]', '', text)
     text = re.sub(r'\s+', '_', text.strip())
     return text
-
 
 def parse_value(value_str: str) -> float | None:
     """Parse BEA data value to float, handling commas and special values."""
@@ -40,7 +37,6 @@ def parse_value(value_str: str) -> float | None:
     except (ValueError, TypeError):
         return None
 
-
 def normalize_date(time_period: str, frequency: str) -> str:
     """Normalize TimePeriod to ISO 8601 format."""
     if frequency == 'quarterly':
@@ -54,7 +50,6 @@ def normalize_date(time_period: str, frequency: str) -> str:
 
     return time_period
 
-
 def detect_frequency(time_period: str) -> str:
     """Detect frequency from TimePeriod format."""
     if re.match(r'^\d{4}Q[1-4]$', time_period):
@@ -63,7 +58,6 @@ def detect_frequency(time_period: str) -> str:
         return 'monthly'
     else:
         return 'annual'
-
 
 def extract_semantic_name(table_name: str, description: str) -> tuple[str, str]:
     """
@@ -258,7 +252,6 @@ def extract_semantic_name(table_name: str, description: str) -> tuple[str, str]:
 
     return subject, measurement
 
-
 def transform_table_frequency(records: list[dict], frequency: str) -> pa.Table | None:
     """Transform records for a single frequency into a wide PyArrow table."""
     if not records:
@@ -308,7 +301,6 @@ def transform_table_frequency(records: list[dict], frequency: str) -> pa.Table |
     schema = pa.schema(schema_fields)
     return pa.Table.from_pylist(rows, schema=schema)
 
-
 def make_dataset_id(table_name: str, description: str, frequency: str, suffix: str = "") -> str:
     """Generate semantic dataset ID."""
     subject, measurement = extract_semantic_name(table_name, description)
@@ -318,7 +310,6 @@ def make_dataset_id(table_name: str, description: str, frequency: str, suffix: s
         base_id = f"{base_id}_{suffix}"
 
     return base_id
-
 
 def make_metadata(dataset_id: str, table_name: str, description: str, frequency: str, columns: list[str]) -> dict:
     """Generate metadata for a dataset."""
@@ -352,11 +343,9 @@ def make_metadata(dataset_id: str, table_name: str, description: str, frequency:
         'column_descriptions': column_descriptions,
     }
 
-
 def load_nipa_tables() -> list[dict]:
     """Load the NIPA table catalog."""
     return load_raw_json('nipa_tables')
-
 
 def load_table_data(table_name: str) -> dict | None:
     """Load raw data for a single NIPA table."""
@@ -365,6 +354,55 @@ def load_table_data(table_name: str) -> dict | None:
     except FileNotFoundError:
         return None
 
+def test(table: pa.Table, frequency: str) -> None:
+    """
+    Validate NIPA dataset output.
+
+    Args:
+        table: PyArrow table to validate
+        frequency: 'annual', 'quarterly', or 'monthly'
+    """
+    # Get all column names
+    columns = {f.name: str(f.type) for f in table.schema}
+
+    # Build schema validation dict
+    schema_dict = {}
+    for col_name, col_type in columns.items():
+        if col_name == 'date':
+            schema_dict[col_name] = 'string'
+        else:
+            schema_dict[col_name] = 'double'
+
+    # Basic schema validation
+    validate(table, {
+        'columns': schema_dict,
+        'not_null': ['date'],
+        'unique': ['date'],
+        'min_rows': 1,
+    })
+
+    # Validate date format based on frequency
+    dates = table.column('date').to_pylist()
+
+    if frequency == 'annual':
+        pattern = r'^\d{4}$'
+        for d in dates:
+            assert re.match(pattern, d), f"Invalid annual date format: {d}"
+    elif frequency == 'quarterly':
+        pattern = r'^\d{4}-Q[1-4]$'
+        for d in dates:
+            assert re.match(pattern, d), f"Invalid quarterly date format: {d}"
+    elif frequency == 'monthly':
+        pattern = r'^\d{4}-\d{2}$'
+        for d in dates:
+            assert re.match(pattern, d), f"Invalid monthly date format: {d}"
+
+    # Validate dates are sorted
+    assert dates == sorted(dates), "Dates should be sorted ascending"
+
+    # Validate we have at least one data column
+    data_columns = [c for c in columns.keys() if c != 'date']
+    assert len(data_columns) >= 1, "Table must have at least one data column"
 
 def run():
     """Transform all NIPA tables into frequency-split datasets."""
@@ -425,12 +463,16 @@ def run():
             test(table, frequency)
 
             upload_data(table, dataset_id, mode='overwrite')
-            publish(dataset_id, make_metadata(dataset_id, table_name, description, frequency, columns))
 
             datasets_created += 1
 
     print(f"\nComplete: {datasets_created} datasets created, {datasets_skipped} tables skipped")
 
+from nodes.nipa_data import run as nipa_data_run
+
+NODES = {
+    run: [nipa_data_run],
+}
 
 if __name__ == '__main__':
     run()

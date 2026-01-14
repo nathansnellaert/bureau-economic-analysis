@@ -15,11 +15,14 @@ dependencies = [
     "requests>=2.28.0",
     "deltalake>=0.17.0",
     "sqlalchemy>=2.0.43",
+
+    "duckdb",
 ]
 
 [tool.uv]
 dev-dependencies = [
     "psutil>=5.9.0",
     "pytest>=7.0.0",
-    "ipython>=8.0.0"
+    "ipython>=8.0.0",
+    "duckdb",
 ]
