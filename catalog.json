@@ -1,0 +1,75 @@
+{
+  "source": "Bureau of Economic Analysis (BEA) API",
+  "source_url": "https://apps.bea.gov/api/signup/",
+  "api_base": "https://apps.bea.gov/api/data",
+  "license": "Public Domain (U.S. Government Work, 17 U.S.C. § 105)",
+  "bea_datasets": {
+    "NIPA": {
+      "covered": true,
+      "nodes": ["nipa_tables", "nipa_data", "nipa_transform"],
+      "description": "National Income and Product Accounts. All tables in the NIPA catalog are fetched dynamically; each table is split into one dataset per available frequency (annual / quarterly / monthly), wide format with line items as columns."
+    },
+    "FixedAssets": {
+      "covered": true,
+      "nodes": ["fixed_assets_tables", "fixed_assets_data", "fixed_assets_transform"],
+      "description": "Fixed asset stocks, investment and depreciation. Annual only, wide format."
+    },
+    "GDPbyIndustry": {
+      "covered": true,
+      "nodes": ["gdp_industry_tables", "gdp_industry_data", "gdp_industry_transform"],
+      "description": "Value added, gross output and related series by industry. Annual and quarterly, wide format with industries as columns."
+    },
+    "ITA": {
+      "covered": true,
+      "nodes": ["ita_tables", "ita_data", "ita_transform"],
+      "description": "International Transactions Accounts. One dataset per indicator per frequency (annual, quarterly SA, quarterly NSA), long format with a single value column.",
+      "scope_notes": "Only the AllCountries aggregate is ingested. The per-country / per-area breakdown is intentionally excluded — it would multiply the dataset count by ~80x with limited incremental analytical value at this stage. TSI_* pre-built time-series IDs are also filtered out (redundant with the indicator-level pulls)."
+    },
+    "Regional": {
+      "covered": true,
+      "nodes": ["regional_tables", "regional_data", "regional_transform"],
+      "description": "State-level regional economic data (GDP, personal income, consumption, RPP) by line code. Long format with composite key (date, geo_fips).",
+      "scope_notes": "State-level only. County, MSA and metro-level GeoFips tiers are intentionally excluded for volume reasons. Target table families are explicitly enumerated in regional_tables.TARGET_TABLES."
+    },
+    "NIUnderlyingDetail": {
+      "covered": true,
+      "nodes": ["ni_underlying_tables", "ni_underlying_data", "ni_underlying_transform"],
+      "description": "Underlying detail tables behind the NIPA aggregates. Same API shape as NIPA."
+    },
+    "IIP": {
+      "covered": true,
+      "nodes": ["iip_tables", "iip_data", "iip_transform"],
+      "description": "International Investment Position. Quarterly and annual stock data on U.S. external financial assets and liabilities."
+    },
+    "UnderlyingGDPbyIndustry": {
+      "covered": false,
+      "reason": "Superset of GDPbyIndustry, substantially overlapping. Deferred pending demand."
+    },
+    "IntlServTrade": {
+      "covered": false,
+      "reason": "International services trade. Deferred pending demand."
+    },
+    "IntlServSTA": {
+      "covered": false,
+      "reason": "International services supplied through affiliates. Deferred pending demand."
+    },
+    "MNE": {
+      "covered": false,
+      "reason": "Multinational enterprises — different data model (enterprise-level cross-sections, not time series). Deferred."
+    },
+    "InputOutput": {
+      "covered": false,
+      "reason": "Industry-by-industry make/use matrices; does not fit the flat time-series publishing model without a dedicated reshape. Deferred."
+    },
+    "APIDatasetMetaData": {
+      "covered": false,
+      "reason": "Meta endpoint only — not a data source."
+    }
+  },
+  "freshness": {
+    "strategy": "Raw state tracks the last download timestamp per table/indicator with a TTL (default 7 days). After the TTL expires, the download node refetches that table. Transform nodes short-circuit via data_hash when the raw payload has not changed, so unchanged datasets are not re-merged or re-published.",
+    "stale_cutoff_years_env": "BEA_STALE_CUTOFF_YEARS",
+    "stale_cutoff_default_years": 3,
+    "stale_cutoff_behavior": "Transform nodes drop datasets whose latest observation is older than (current_year - STALE_CUTOFF_YEARS). Skipped dataset IDs are logged at the end of each transform run."
+  }
+}
