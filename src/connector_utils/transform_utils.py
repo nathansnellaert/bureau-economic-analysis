@@ -2,12 +2,21 @@
 
 import re
 
+# Column names that clash with Delta Lake merge aliases.
+_DELTA_RESERVED = {"source", "target"}
+
 
 def slugify(text: str) -> str:
-    """Convert text to snake_case column name."""
+    """Convert text to snake_case column name.
+
+    Appends a trailing underscore to names that collide with Delta Lake
+    merge aliases (``source``, ``target``).
+    """
     text = text.lower()
     text = re.sub(r'[^a-z0-9\s]', '', text)
     text = re.sub(r'\s+', '_', text.strip())
+    if text in _DELTA_RESERVED:
+        text = f"{text}_"
     return text
 
 
